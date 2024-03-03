@@ -6,6 +6,7 @@ from tcod.ecs import Entity
 
 from game.action import Action, Done, ExecuteResult, Impossible, Planner, PlanResult
 from game.components import MapTiles, Position
+from game.tiles import TILE_DB
 
 
 @attrs.define
@@ -19,14 +20,22 @@ class MoveAction(Action):
         pos = entity.components[Position]
         dest = pos + self.direction
         tiles = pos.z.components[MapTiles]
-        if tiles[dest.y, dest.x] == 0:
-            return Impossible("Path is blocked.")
-        return self
+
+        if TILE_DB["move_cost"][tiles[dest.y, dest.x]]:
+            return self
+        if TILE_DB["dig_cost"][tiles[dest.y, dest.x]]:
+            return self
+        return Impossible("Path is blocked.")
 
     def execute(self, entity: Entity) -> ExecuteResult:
         """Move the entity."""
-        entity.components[Position] += self.direction
-        return Done()
+        pos = entity.components[Position] = entity.components[Position] + self.direction
+        tiles = pos.z.components[MapTiles]
+
+        if TILE_DB["dig_cost"][tiles[pos.y, pos.x]]:
+            tiles[pos.y, pos.x] += 1  # The next index is always the dug-out tile.
+            return Done(TILE_DB["dig_cost"][tiles[pos.y, pos.x]])
+        return Done(TILE_DB["move_cost"][tiles[pos.y, pos.x]])
 
 
 @attrs.define

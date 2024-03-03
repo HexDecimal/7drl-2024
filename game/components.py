@@ -20,6 +20,11 @@ class Position:
     y: int
     z: Entity
 
+    @property
+    def ij(self) -> tuple[int, int]:
+        """Return the ij coordinates as a tuple."""
+        return self.y, self.x
+
     def __add__(self, direction: tuple[int, int]) -> Self:
         """Add a vector to this position."""
         x, y = direction
