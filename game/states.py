@@ -7,11 +7,14 @@ from typing import Final
 import attrs
 import tcod.console
 import tcod.event
+from tcod.ecs import Entity
 from tcod.event import KeySym
 
 import g
+import game.actions
+import game.rendering
 import game.world_tools
-from game.components import Graphic, Position
+from game.action import Impossible, Planner
 from game.state import Pop, Push, Rebase, State, StateResult
 from game.tags import IsPlayer
 
@@ -47,6 +50,17 @@ DIRECTION_KEYS: Final = {
 }
 
 
+def do_action(entity: Entity, action: Planner) -> StateResult:
+    """Perform an action."""
+    plan_result = action.plan(entity)
+    match plan_result:
+        case Impossible(reason=_reason):
+            pass
+        case _:
+            plan_result.execute(entity)
+    return None
+
+
 @attrs.define(eq=False)
 class InGame(State):
     """Primary in-game state."""
@@ -58,8 +72,7 @@ class InGame(State):
             case tcod.event.Quit():
                 raise SystemExit()
             case tcod.event.KeyDown(sym=sym) if sym in DIRECTION_KEYS:
-                player.components[Position] += DIRECTION_KEYS[sym]
-                return None
+                return do_action(player, game.actions.BumpAction(DIRECTION_KEYS[sym]))
             case tcod.event.KeyDown(sym=KeySym.ESCAPE):
                 return Push(MainMenu())
             case _:
@@ -67,12 +80,7 @@ class InGame(State):
 
     def on_draw(self, console: tcod.console.Console) -> None:
         """Draw the standard screen."""
-        for entity in g.world.Q.all_of(components=[Position, Graphic]):
-            pos = entity.components[Position]
-            if not (0 <= pos.x < console.width and 0 <= pos.y < console.height):
-                continue
-            graphic = entity.components[Graphic]
-            console.rgb[["ch", "fg"]][pos.y, pos.x] = graphic.ch, graphic.fg
+        game.rendering.render_map(g.world, console)
 
 
 @attrs.define()

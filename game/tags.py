@@ -11,3 +11,6 @@ IsActor: Final = "IsActor"
 
 IsItem: Final = "IsItem"
 """Entity is an item."""
+
+ChildOf: Final = "ChildOf"
+"""Hierarchical entity relation."""
