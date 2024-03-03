@@ -1,7 +1,7 @@
 """Collection of common components."""
 from __future__ import annotations
 
-from typing import Final, Self
+from typing import Self
 
 import attrs
 import tcod.ecs.callbacks
@@ -38,7 +38,3 @@ class Graphic:
 
     ch: int = ord("!")
     fg: tuple[int, int, int] = (255, 255, 255)
-
-
-Gold: Final = ("Gold", int)
-"""Amount of gold."""

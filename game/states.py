@@ -11,9 +11,9 @@ from tcod.event import KeySym
 
 import g
 import game.world_tools
-from game.components import Gold, Graphic, Position
+from game.components import Graphic, Position
 from game.state import Pop, Push, Rebase, State, StateResult
-from game.tags import IsItem, IsPlayer
+from game.tags import IsPlayer
 
 DIRECTION_KEYS: Final = {
     # Arrow keys
@@ -59,11 +59,6 @@ class InGame(State):
                 raise SystemExit()
             case tcod.event.KeyDown(sym=sym) if sym in DIRECTION_KEYS:
                 player.components[Position] += DIRECTION_KEYS[sym]
-                # Auto pickup gold
-                for gold in g.world.Q.all_of(components=[Gold], tags=[player.components[Position], IsItem]):
-                    player.components[Gold] += gold.components[Gold]
-                    print(f"Picked up {gold.components[Gold]}g, total: {player.components[Gold]}g")
-                    gold.clear()
                 return None
             case tcod.event.KeyDown(sym=KeySym.ESCAPE):
                 return Push(MainMenu())
