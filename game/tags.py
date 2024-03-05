@@ -14,3 +14,6 @@ IsItem: Final = "IsItem"
 
 ChildOf: Final = "ChildOf"
 """Hierarchical entity relation."""
+
+IsStart: Final = "IsStart"
+"""Player starting point."""
