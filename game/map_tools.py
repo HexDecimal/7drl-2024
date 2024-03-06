@@ -5,12 +5,14 @@ from collections.abc import Iterator
 from random import Random
 
 import numpy as np
+import scipy.ndimage  # type: ignore[import-untyped]
 import tcod.noise
+from numpy.typing import NDArray
 from tcod.ecs import Entity, Registry
 
 from game.components import MapShape, MapTiles, Position
 from game.tags import IsStart
-from game.tiles import TILE_DB, TILES
+from game.tiles import TILES
 
 
 def iter_random_walk(rng: Random, start: tuple[int, int]) -> Iterator[tuple[int, int]]:
@@ -24,10 +26,28 @@ def iter_random_walk(rng: Random, start: tuple[int, int]) -> Iterator[tuple[int,
         yield (x, y)
 
 
+class Zone:
+    """Track open zones."""
+
+    def __init__(self, labeled: NDArray[np.integer], index: int, slice_i: slice, slice_j: slice) -> None:
+        """Initialize a zone."""
+        self.slice_i = slice_i
+        self.slice_j = slice_j
+        self.mask: NDArray[np.bool_] = labeled[slice_i, slice_j] == index
+
+    def iter_open_tiles_ij(self) -> Iterator[tuple[int, int]]:
+        """Iterate over the ij coordinates of open spaces."""
+        ii, jj = self.mask.nonzero()
+        ii += self.slice_i.start
+        jj += self.slice_j.start
+        return zip(ii.tolist(), jj.tolist(), strict=True)
+
+
 def new_map(world: Registry) -> Entity:
     """Return a new map."""
     map_ = world[object()]
     shape = map_.components[MapShape] = (1024, 1024)
+    center_ij = shape[0] // 2, shape[1] // 2
     tiles = map_.components[MapTiles] = np.zeros(shape=shape, dtype=np.uint8)
 
     rng = world[None].components[Random]
@@ -47,12 +67,17 @@ def new_map(world: Registry) -> Entity:
     tiles[[0, -1], :] = 0
     tiles[:, [0, -1]] = 0
 
+    labeled, count = scipy.ndimage.label(is_open, np.ones((3, 3), int))
+
+    zones = [
+        Zone(labeled, i, slice_i, slice_j)
+        for i, (slice_i, slice_j) in enumerate(scipy.ndimage.find_objects(labeled), start=1)
+    ]
+    zones.sort(key=lambda z: abs(z.slice_i.start - center_ij[0]) + abs(z.slice_j.start - center_ij[1]))
+
+    start_zone = zones.pop(0)
     start = world[object()]
-    open_area = TILE_DB["move_cost"][tiles] != 0
-    for ij in iter_random_walk(rng, (shape[0] // 2, shape[1] // 2)):
-        if open_area[ij]:
-            start.components[Position] = Position(ij[1], ij[0], map_)
-            break
+    start.components[Position] = Position(*rng.choice(list(start_zone.iter_open_tiles_ij()))[::-1], map_)
     start.tags |= {IsStart}
 
     return map_

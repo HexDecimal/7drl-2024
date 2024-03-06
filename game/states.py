@@ -15,6 +15,7 @@ import game.actions
 import game.rendering
 import game.world_tools
 from game.action import Impossible, Planner
+from game.components import Position
 from game.state import Pop, Push, Rebase, State, StateResult
 from game.tags import IsPlayer
 
@@ -80,7 +81,9 @@ class InGame(State):
 
     def on_draw(self, console: tcod.console.Console) -> None:
         """Draw the standard screen."""
+        (player,) = g.world.Q.all_of(tags=[IsPlayer])
         game.rendering.render_map(g.world, console)
+        console.print(0, 0, str(player.components[Position]), fg=(255, 255, 255), bg=(0, 0, 0))
 
 
 @attrs.define()
