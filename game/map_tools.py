@@ -10,7 +10,7 @@ import tcod.noise
 from numpy.typing import NDArray
 from tcod.ecs import Entity, Registry
 
-from game.components import MapShape, MapTiles, Position
+from game.components import Graphic, MapShape, MapTiles, Position
 from game.tags import IsStart
 from game.tiles import TILES
 
@@ -42,11 +42,14 @@ class Zone:
         jj += self.slice_j.start
         return zip(ii.tolist(), jj.tolist(), strict=True)
 
+    def random_tile_xy(self, rng: Random) -> tuple[int, int]:
+        return rng.choice(list(self.iter_open_tiles_ij()))[::-1]
+
 
 def new_map(world: Registry) -> Entity:
     """Return a new map."""
     map_ = world[object()]
-    shape = map_.components[MapShape] = (1024, 1024)
+    shape = map_.components[MapShape] = (512, 512)
     center_ij = shape[0] // 2, shape[1] // 2
     tiles = map_.components[MapTiles] = np.zeros(shape=shape, dtype=np.uint8)
 
@@ -77,7 +80,12 @@ def new_map(world: Registry) -> Entity:
 
     start_zone = zones.pop(0)
     start = world[object()]
-    start.components[Position] = Position(*rng.choice(list(start_zone.iter_open_tiles_ij()))[::-1], map_)
+    start.components[Position] = Position(*start_zone.random_tile_xy(rng), map_)
     start.tags |= {IsStart}
+
+    for zone in zones:
+        item = world[object()]
+        item.components[Position] = Position(*zone.random_tile_xy(rng), map_)
+        item.components[Graphic] = Graphic(ord("$"))
 
     return map_
