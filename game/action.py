@@ -15,7 +15,7 @@ class Planner(Protocol):
 
     def plan(self, entity: Entity) -> PlanResult:
         """Decide how an actions goal will be reached."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class Executer(Protocol):
@@ -25,7 +25,7 @@ class Executer(Protocol):
 
     def execute(self, entity: Entity) -> ExecuteResult:
         """Perform the actual action."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class Action(Planner, Executer):

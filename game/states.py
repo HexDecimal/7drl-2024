@@ -72,7 +72,7 @@ class InGame(State):
         (player,) = g.world.Q.all_of(tags=[IsPlayer])
         match event:
             case tcod.event.Quit():
-                raise SystemExit()
+                raise SystemExit
             case tcod.event.KeyDown(sym=sym) if sym in DIRECTION_KEYS:
                 return do_action(player, game.actions.BumpAction(DIRECTION_KEYS[sym]))
             case tcod.event.KeyDown(sym=KeySym.ESCAPE):
@@ -108,7 +108,7 @@ class ListMenu(State):
         """Handle events for menus."""
         match event:
             case tcod.event.Quit():
-                raise SystemExit()
+                raise SystemExit
             case tcod.event.KeyDown(sym=sym) if sym in DIRECTION_KEYS:
                 dx, dy = DIRECTION_KEYS[sym]
                 if dx != 0 or dy == 0:
@@ -192,4 +192,4 @@ class MainMenu(ListMenu):
 
     def quit(self) -> StateResult:
         """Close the program."""
-        raise SystemExit()
+        raise SystemExit

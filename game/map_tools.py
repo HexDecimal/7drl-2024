@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from random import Random
+from typing import Final
 
 import numpy as np
 import scipy.ndimage  # type: ignore[import-untyped]
@@ -19,9 +20,9 @@ from game.tiles import TILES
 def iter_random_walk(rng: Random, start: tuple[int, int]) -> Iterator[tuple[int, int]]:
     """Iterate over tiles of a random walk."""
     x, y = start
-    DIRS = ((-1, 0), (1, 0), (0, -1), (0, 1))
+    dirs: Final = ((-1, 0), (1, 0), (0, -1), (0, 1))
     while True:
-        dx, dy = rng.choice(DIRS)
+        dx, dy = rng.choice(dirs)
         x += dx
         y += dy
         yield (x, y)
@@ -44,6 +45,7 @@ class Zone:
         return zip(ii.tolist(), jj.tolist(), strict=True)
 
     def random_tile_xy(self, rng: Random) -> tuple[int, int]:
+        """Return a random open coordinate from this zone."""
         return rng.choice(list(self.iter_open_tiles_ij()))[::-1]
 
 
